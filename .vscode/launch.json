@@ -1,0 +1,22 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "cl.exe - 生成和调试活动文件",
+            "type": "cppvsdbg",
+            "request": "launch",
+            // 相对应的修改这里，在路径里添加一个 Bin
+            "program": "${fileDirname}\\Bin\\${fileBasenameNoExtension}.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "console": "externalTerminal",
+            // 修改了这里，与自定义任务的 label 对应
+            "preLaunchTask": "remove obj"
+        }
+    ]
+}

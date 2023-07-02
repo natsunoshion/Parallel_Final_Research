@@ -1,0 +1,95 @@
+#include <iostream>
+#include <chrono>
+#include <immintrin.h>  // AVX、AVX2
+#include "../random.h"
+
+using namespace std;
+
+// 普通高斯消元AVX并行算法
+void LU(float** A, int N) {
+    for (int k=0; k<N; k++) {
+        // 并行化本行除法
+        // 这里我在AVX指令集中没有找到类似于SSE中_mm_load1_ps这样方便的指令，所以使用新建数组的方式来复制8份A[k][k]存进vt中
+        float dup[8] = {A[k][k], A[k][k], A[k][k], A[k][k], A[k][k], A[k][k], A[k][k], A[k][k]};
+
+        // vt的向量寄存器为：{A[k][k], A[k][k], A[k][k], A[k][k], A[k][k], A[k][k], A[k][k], A[k][k]}
+        __m256 vt = _mm256_load_ps(dup);
+        int j = k + 1;
+
+        // A[k][j]需要内存对齐，本来是要求(k*N + j) % 8 == 0，为了方便，这里N取8的倍数，条件就变为了j % 8 == 0
+        while (j % 8 != 0) {
+            A[k][j] = A[k][j] / A[k][k];
+            j++;
+        }
+        for (; j+8<=N; j+=8) {
+            // va的向量寄存器为：{A[k][j], A[k][j+1], A[k][j+2], A[k][j+3], A[k][j+4], A[k][j+5], A[k][j+6], A[k][j+7]}
+            __m256 va = _mm256_load_ps(&A[k][j]);  // loadu，内存可以不对齐
+
+            // va = va / vt
+            va = _mm256_div_ps(va, vt);
+
+            // 将va寄存器存储到原位置，完成8个数的除法
+            _mm256_store_ps(&A[k][j], va);
+        }
+
+        // 处理剩下的元素
+        for (; j<N; j++) {
+            A[k][j] = A[k][j] / A[k][k];
+        }
+        A[k][k] = 1.0;
+        for (int i=k+1; i<N; i++) {
+            // 对第i行的元素计算进行并行化处理
+            // A[i][j]、A[k][j]开始连续四个元素分别形成寄存器
+            // A[i][k]为固定值，复制8份存在另一个寄存器里
+            float dupik[8] = {A[i][k], A[i][k], A[i][k], A[i][k], A[i][k], A[i][k], A[i][k], A[i][k]};
+            __m256 vaik = _mm256_load_ps(dupik);
+            int j = k + 1;
+
+            // A[k][j]、A[i][j]需要内存对齐
+            while (j % 8 != 0) {
+                A[i][j] = A[i][j] - A[k][j]*A[i][k];
+                j++;
+            }
+            for (; j+8<=N; j+=8) {
+                // 原始公式：A[i][j] = A[i][j] - A[k][j]*A[i][k];
+                __m256 vakj = _mm256_load_ps(&A[k][j]);
+                __m256 vaij = _mm256_load_ps(&A[i][j]);
+                __m256 vx = _mm256_mul_ps(vakj, vaik);
+                vaij = _mm256_sub_ps(vaij, vx);
+                _mm256_store_ps(&A[i][j], vaij);
+            }
+
+            // 剩下的元素
+            for (; j<N; j++) {
+                A[i][j] = A[i][j] - A[k][j]*A[i][k];
+            }
+            A[i][k] = 0;
+        }
+    }
+}
+
+int main() {
+    int N;
+    vector<int> size = {200, 500, 1000, 2000, 3000};
+    for (int i=0; i<5; i++) {
+        // 设置问题规模
+        N = size[i];
+
+        // 初始化二维数组
+        float** A = new float*[N];
+        for (int i=0; i<N; i++) {
+            A[i] = new float[N];
+        }
+
+        // 使用随机数重置数组
+        reset(A, N);
+
+        // 使用C++11的chrono库来计时
+        auto start = chrono::high_resolution_clock::now();
+        LU(A, N);
+        auto end = chrono::high_resolution_clock::now();
+        auto diff = chrono::duration_cast<chrono::duration<double, milli>>(end - start);
+        cout << "Size = " << N << ": " << diff.count() << "ms" << endl;
+    }
+    return 0;
+}

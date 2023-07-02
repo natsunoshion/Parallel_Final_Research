@@ -1,0 +1,55 @@
+串行：
+Size = 200: 7.0995ms
+Size = 500: 108.391ms
+Size = 1000: 907.943ms
+Size = 2000: 7528.58ms
+Size = 3000: 26544.5ms
+
+cache 优化：
+Size = 200: 5.9389ms
+Size = 500: 90.8284ms
+Size = 1000: 685.212ms
+Size = 2000: 5774.75ms
+Size = 3000: 17901.4ms
+
+SSE：
+Size = 200: 3.2009ms
+Size = 500: 46.578ms
+Size = 1000: 406.336ms
+Size = 2000: 3403.7ms
+Size = 3000: 10992.3ms
+
+SSE 对齐：
+Size = 200: 3.2997ms
+Size = 500: 46.5187ms
+Size = 1000: 374.221ms
+Size = 2000: 3377.29ms
+Size = 3000: 10921.2ms
+
+AVX：
+ize = 200: 2.2215ms
+Size = 500: 29.4907ms
+Size = 1000: 221.622ms
+Size = 2000: 2127.31ms
+Size = 3000: 7290.24ms
+
+AVX 对齐：
+Size = 200: 2.0247ms
+Size = 500: 29.3232ms
+Size = 1000: 226.983ms
+Size = 2000: 1957.43ms
+Size = 3000: 7135.74ms
+
+AVX-512：
+Size = 200: 1.8135ms
+Size = 500: 23.4777ms
+Size = 1000: 180.237ms
+Size = 2000: 1665.62ms
+Size = 3000: 6489.41ms
+
+AVX-512 对齐
+Size = 200: 2.5424ms
+Size = 500: 25.1162ms
+Size = 1000: 188.934ms
+Size = 2000: 1568.07ms
+Size = 3000: 6337.55ms
