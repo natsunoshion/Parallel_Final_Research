@@ -3,6 +3,9 @@
 #include <sstream>
 #include <chrono>
 #include <cmath>
+#include <thread>
+#include <vector>
+
 
 // 对应于数据集三个参数：矩阵列数，非零消元子行数，被消元行行数
 #define num_columns 1011
@@ -89,9 +92,12 @@ void input() {
     }
 }
 
-// 特殊高斯消去法串行 char 数组实现
+// 特殊高斯消去法并行 char 数组实现
 void solve() {
     auto start = std::chrono::high_resolution_clock::now();
+
+    const int num_threads = std::thread::hardware_concurrency();  // 获取可用的线程数
+    std::vector<std::thread> threads(num_threads);
 
     // 遍历被消元行：逐元素消去，一次清空
     for (int i = 0; i < num_eliminated_rows; i++) {
@@ -105,8 +111,17 @@ void solve() {
                     int leader = 5 * j + k;
                     if (R[leader][j] != 0) {
                         // 有消元子就消去，需要对整行异或
-                        for (int m = j; m >= 0; m--) {
-                            E[i][m] ^= R[leader][m];
+                        // 并行计算
+                        for (int t = 0; t < num_threads; t++) {
+                            threads[t] = std::thread([&](int thread_id, int start, int end) {
+                                for (int m = start; m >= end; m--) {
+                                    E[i][m] ^= R[leader][m];
+                                }
+                            }, t, j, 0);
+                        }
+
+                        for (int t = 0; t < num_threads; t++) {
+                            threads[t].join();
                         }
                     } else {
                         // 否则升格，升格之后这一整行都可以不用管了

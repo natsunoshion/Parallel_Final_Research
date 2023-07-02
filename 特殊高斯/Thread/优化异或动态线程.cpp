@@ -3,29 +3,32 @@
 #include <sstream>
 #include <chrono>
 #include <cmath>
+#include <thread>
+#include <vector>
 
-// ¶ÔÓ¦ÓÚÊı¾İ¼¯Èı¸ö²ÎÊı£º¾ØÕóÁĞÊı£¬·ÇÁãÏûÔª×ÓĞĞÊı£¬±»ÏûÔªĞĞĞĞÊı
+
+// å¯¹åº”äºæ•°æ®é›†ä¸‰ä¸ªå‚æ•°ï¼šçŸ©é˜µåˆ—æ•°ï¼Œéé›¶æ¶ˆå…ƒå­è¡Œæ•°ï¼Œè¢«æ¶ˆå…ƒè¡Œè¡Œæ•°
 #define num_columns 1011
 #define num_elimination_rows 539
 #define num_eliminated_rows 263
 
-// Êı×é³¤¶È
+// æ•°ç»„é•¿åº¦
 const int length = 203;
 
-// Ê¹ÓÃcharÊı×é½øĞĞ´æ´¢£¬R£ºÏûÔª×Ó£¬E£º±»ÏûÔªĞĞ
-char R[10000][length];  // R[i]¼ÇÂ¼ÁËÊ×ÏîÎªi£¨ÏÂ±ê´Ó0¿ªÊ¼¼ÇÂ¼£©µÄÏûÔª×ÓĞĞ
-                        // ËùÒÔ²»ÄÜÖ±½ÓÓÃnum_elimination_rowsÉèÖÃÊı×é´óĞ¡
+// ä½¿ç”¨charæ•°ç»„è¿›è¡Œå­˜å‚¨ï¼ŒRï¼šæ¶ˆå…ƒå­ï¼ŒEï¼šè¢«æ¶ˆå…ƒè¡Œ
+char R[10000][length];  // R[i]è®°å½•äº†é¦–é¡¹ä¸ºiï¼ˆä¸‹æ ‡ä»0å¼€å§‹è®°å½•ï¼‰çš„æ¶ˆå…ƒå­è¡Œ
+                        // æ‰€ä»¥ä¸èƒ½ç›´æ¥ç”¨num_elimination_rowsè®¾ç½®æ•°ç»„å¤§å°
 char E[num_eliminated_rows][length];
 
-// ¼ÇÂ¼ÊÇ·ñÉı¸ñ
+// è®°å½•æ˜¯å¦å‡æ ¼
 bool lifted[num_eliminated_rows];
 
-// ½«µ±Ç°Î»Í¼´òÓ¡µ½ÆÁÄ»ÉÏ
+// å°†å½“å‰ä½å›¾æ‰“å°åˆ°å±å¹•ä¸Š
 void print() {
     for (int i = 0; i < num_eliminated_rows; i++) {
         // std::cout << i << ':';
         for (int j = num_columns - 1; j >= 0; j--) {
-            // µÚjÎ»Îª1
+            // ç¬¬jä½ä¸º1
             if ((((E[i][j / 5] >> (j - 5 * (j / 5)))) & 1) == 1) {
                 std::cout << j << ' ';
             }
@@ -37,26 +40,26 @@ void print() {
     }
 }
 
-// ¶ÁÈë
+// è¯»å…¥
 void input() {
-    // ¶ÁÈëÏûÔª×Ó
+    // è¯»å…¥æ¶ˆå…ƒå­
     std::ifstream file_R;
     char buffer[10000] = {0};
-    file_R.open("D:/study/vscode/parallel/Parallel_Final_Research/ÌØÊâ¸ßË¹/Groebner/²âÊÔÑùÀı4 ¾ØÕóÁĞÊı1011£¬·ÇÁãÏûÔª×Ó539£¬±»ÏûÔªĞĞ263/ÏûÔª×Ó.txt");
+    file_R.open("D:/study/vscode/parallel/Parallel_Final_Research/ç‰¹æ®Šé«˜æ–¯/Groebner/æµ‹è¯•æ ·ä¾‹4 çŸ©é˜µåˆ—æ•°1011ï¼Œéé›¶æ¶ˆå…ƒå­539ï¼Œè¢«æ¶ˆå…ƒè¡Œ263/æ¶ˆå…ƒå­.txt");
     // file_R.open("/home/u195976/oneAPI_Essentials/02_SYCL_Program_Structure/R.txt");
     if (file_R.fail()) {
         std::cout << "Failed to open file" << std::endl;
         perror("File error");
-        std::string command = "dir \"D:/study/vscode/parallel/Parallel_Final_Research/ÌØÊâ¸ßË¹/Groebner/²âÊÔÑùÀı4 ¾ØÕóÁĞÊı1011£¬·ÇÁãÏûÔª×Ó539£¬±»ÏûÔªĞĞ263/ÏûÔª×Ó.txt\"";
+        std::string command = "dir \"D:/study/vscode/parallel/Parallel_Final_Research/ç‰¹æ®Šé«˜æ–¯/Groebner/æµ‹è¯•æ ·ä¾‹4 çŸ©é˜µåˆ—æ•°1011ï¼Œéé›¶æ¶ˆå…ƒå­539ï¼Œè¢«æ¶ˆå…ƒè¡Œ263/æ¶ˆå…ƒå­.txt\"";
         int result = std::system(command.c_str());
     }
     while (file_R.getline(buffer, sizeof(buffer))) {
-        // Ã¿Ò»´Î¶ÁÈëÒ»ĞĞ£¬ÏûÔª×ÓÃ¿32Î»¼ÇÂ¼½øÒ»¸öintÖĞ
+        // æ¯ä¸€æ¬¡è¯»å…¥ä¸€è¡Œï¼Œæ¶ˆå…ƒå­æ¯32ä½è®°å½•è¿›ä¸€ä¸ªintä¸­
         int bit;
         std::stringstream line(buffer);
         int first_in = 1;
 
-        // ÏûÔª×ÓµÄindexÊÇÆäÊ×Ïî
+        // æ¶ˆå…ƒå­çš„indexæ˜¯å…¶é¦–é¡¹
         int index;
         while (line >> bit) {
             if (first_in) {
@@ -64,56 +67,68 @@ void input() {
                 index = bit;
             }
 
-            // ½«µÚindexĞĞµÄÏûÔª×Ó¶ÔÓ¦Î» ÖÃ1
+            // å°†ç¬¬indexè¡Œçš„æ¶ˆå…ƒå­å¯¹åº”ä½ ç½®1
             R[index][bit / 5] |= 1 << (bit - (bit / 5) * 5);
         }
     }
     file_R.close();
 
-    // ¶ÁÈë±»ÏûÔªĞĞ
+    // è¯»å…¥è¢«æ¶ˆå…ƒè¡Œ
     std::ifstream file_E;
-    file_E.open("D:/study/vscode/parallel/Parallel_Final_Research/ÌØÊâ¸ßË¹/Groebner/²âÊÔÑùÀı4 ¾ØÕóÁĞÊı1011£¬·ÇÁãÏûÔª×Ó539£¬±»ÏûÔªĞĞ263/±»ÏûÔªĞĞ.txt");
+    file_E.open("D:/study/vscode/parallel/Parallel_Final_Research/ç‰¹æ®Šé«˜æ–¯/Groebner/æµ‹è¯•æ ·ä¾‹4 çŸ©é˜µåˆ—æ•°1011ï¼Œéé›¶æ¶ˆå…ƒå­539ï¼Œè¢«æ¶ˆå…ƒè¡Œ263/è¢«æ¶ˆå…ƒè¡Œ.txt");
     // file_E.open("/home/u195976/oneAPI_Essentials/02_SYCL_Program_Structure/E.txt");
 
-    // ±»ÏûÔªĞĞµÄindex¾ÍÊÇ¶ÁÈëµÄĞĞÊı
+    // è¢«æ¶ˆå…ƒè¡Œçš„indexå°±æ˜¯è¯»å…¥çš„è¡Œæ•°
     int index = 0;
     while (file_E.getline(buffer, sizeof(buffer))) {
-        // Ã¿Ò»´Î¶ÁÈëÒ»ĞĞ£¬ÏûÔª×ÓÃ¿32Î»¼ÇÂ¼½øÒ»¸öintÖĞ
+        // æ¯ä¸€æ¬¡è¯»å…¥ä¸€è¡Œï¼Œæ¶ˆå…ƒå­æ¯32ä½è®°å½•è¿›ä¸€ä¸ªintä¸­
         int bit;
         std::stringstream line(buffer);
         while (line >> bit) {
-            // ½«µÚindexĞĞµÄ±»ÏûÔªĞĞ¶ÔÓ¦Î» ÖÃ1
+            // å°†ç¬¬indexè¡Œçš„è¢«æ¶ˆå…ƒè¡Œå¯¹åº”ä½ ç½®1
             E[index][bit / 5] |= (1 << (bit - (bit / 5) * 5));
         }
         index++;
     }
 }
 
-// ÌØÊâ¸ßË¹ÏûÈ¥·¨´®ĞĞ char Êı×éÊµÏÖ
+// ç‰¹æ®Šé«˜æ–¯æ¶ˆå»æ³•å¹¶è¡Œ char æ•°ç»„å®ç°
 void solve() {
     auto start = std::chrono::high_resolution_clock::now();
 
-    // ±éÀú±»ÏûÔªĞĞ£ºÖğÔªËØÏûÈ¥£¬Ò»´ÎÇå¿Õ
+    // éå†è¢«æ¶ˆå…ƒè¡Œï¼šé€å…ƒç´ æ¶ˆå»ï¼Œä¸€æ¬¡æ¸…ç©º
     for (int i = 0; i < num_eliminated_rows; i++) {
         bool is_eliminated = false;
-        // ĞĞÄÚ±éÀúÒÀ´ÎÕÒÊ×ÏîÏûÈ¥
+        // è¡Œå†…éå†ä¾æ¬¡æ‰¾é¦–é¡¹æ¶ˆå»
         for (int j = length - 1; j >= 0; j--) {
-            // cout << j << "ÏûÈ¥" << endl;
+            // cout << j << "æ¶ˆå»" << endl;
             for (int k = 4; k >= 0; k--) {
                 if ((E[i][j] >> k) == 1) {
-                    // »ñµÃÊ×Ïî
+                    // è·å¾—é¦–é¡¹
                     int leader = 5 * j + k;
                     if (R[leader][j] != 0) {
-                        // ÓĞÏûÔª×Ó¾ÍÏûÈ¥£¬ĞèÒª¶ÔÕûĞĞÒì»ò
-                        for (int m = j; m >= 0; m--) {
-                            E[i][m] ^= R[leader][m];
+                        // æœ‰æ¶ˆå…ƒå­å°±æ¶ˆå»ï¼Œéœ€è¦å¯¹æ•´è¡Œå¼‚æˆ–
+                        // åŠ¨æ€çº¿ç¨‹
+                        const int num_threads = std::thread::hardware_concurrency();  // è·å–å¯ç”¨çš„çº¿ç¨‹æ•°
+                        std::vector<std::thread> threads(num_threads);
+                        // å¹¶è¡Œè®¡ç®—
+                        for (int t = 0; t < num_threads; t++) {
+                            threads[t] = std::thread([&](int thread_id, int start, int end) {
+                                for (int m = start; m >= end; m--) {
+                                    E[i][m] ^= R[leader][m];
+                                }
+                            }, t, j, 0);
+                        }
+
+                        for (int t = 0; t < num_threads; t++) {
+                            threads[t].join();
                         }
                     } else {
-                        // ·ñÔòÉı¸ñ£¬Éı¸ñÖ®ºóÕâÒ»ÕûĞĞ¶¼¿ÉÒÔ²»ÓÃ¹ÜÁË
+                        // å¦åˆ™å‡æ ¼ï¼Œå‡æ ¼ä¹‹åè¿™ä¸€æ•´è¡Œéƒ½å¯ä»¥ä¸ç”¨ç®¡äº†
                         for (int m = j; m >= 0; m--) {
                             R[leader][m] = E[i][m];
                         }
-                        // Ìø³ö¶àÖØÑ­»·
+                        // è·³å‡ºå¤šé‡å¾ªç¯
                         is_eliminated = true;
                     }
                 }
