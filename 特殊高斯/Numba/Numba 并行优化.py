@@ -84,10 +84,10 @@ def solve(E, R, length, num_columns, num_eliminated_rows):
     #                         R[index, length] = 1
     #                         break
 
-    sign = True
-    while sign:
-        # 不升格地处理被消元行，每轮处理 8 个消元子，范围：首项在 i-7 到 i
-        for i in range(length - 1, -2, -8):
+    # 不升格地处理被消元行，每轮处理 8 个消元子，范围：首项在 i-7 到 i
+    for i in range(length - 1, -2, -8):
+        sign = True
+        while sign:
             # 遍历被消元行的每一行
             for j in range(num_eliminated_rows):
                 index = R[j][num_columns]
@@ -111,39 +111,39 @@ def solve(E, R, length, num_columns, num_eliminated_rows):
                     else:
                         break
 
-        for i in range(length % 8 - 1, -1, -1):
-            for j in range(num_eliminated_rows):
-                while R[j][num_columns] == i:
-                    if E[i][num_columns] == 1:
+        # for i in range(length % 8 - 1, -1, -1):
+        #     for j in range(num_eliminated_rows):
+        #         while R[j][num_columns] == i:
+        #             if E[i][num_columns] == 1:
+        #                 for k in range(num_columns):
+        #                     R[j][k] ^= E[i][k]
+
+        #                 num = 0
+        #                 S_num = 0
+        #                 for num in range(num_columns):
+        #                     if R[j][num] != 0:
+        #                         temp = R[j][num]
+        #                         while temp != 0:
+        #                             temp = temp >> 1
+        #                             S_num += 1
+        #                         S_num += num * 32
+        #                         break
+        #                 R[j][num_columns] = S_num - 1
+        #             else:
+        #                 break
+
+                # 然后重新判断是否结束，如果未结束则升格相应的消元子
+                sign = False
+                for i in range(num_eliminated_rows):
+                    temp = R[i][num_columns]
+                    if temp == -1:
+                        continue
+
+                    if E[temp][num_columns] == 0:
                         for k in range(num_columns):
-                            R[j][k] ^= E[i][k]
-
-                        num = 0
-                        S_num = 0
-                        for num in range(num_columns):
-                            if R[j][num] != 0:
-                                temp = R[j][num]
-                                while temp != 0:
-                                    temp = temp >> 1
-                                    S_num += 1
-                                S_num += num * 32
-                                break
-                        R[j][num_columns] = S_num - 1
-                    else:
-                        break
-
-        # 升格消元子，然后判断是否结束
-        sign = False
-        for i in range(num_eliminated_rows):
-            temp = R[i][num_columns]
-            if temp == -1:
-                continue
-
-            if E[temp][num_columns] == 0:
-                for k in range(num_columns):
-                    E[temp][k] = R[i][k]
-                R[i][num_columns] = -1
-                sign = True
+                            E[temp][k] = R[i][k]
+                        R[i][num_columns] = -1
+                        sign = True
 
 # 读取R元素
 with open("D:/study/vscode/parallel/Parallel_Final_Research/特殊高斯/Groebner/测试样例{} 矩阵列数{}，非零消元子{}，被消元行{}/消元子.txt".format(example, num_columns, num_elimination_rows, num_eliminated_rows), "r") as file_R:
